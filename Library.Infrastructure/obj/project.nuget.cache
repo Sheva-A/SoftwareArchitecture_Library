@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "FCW9ik4MYdo=",
+  "success": true,
+  "projectFilePath": "D:\\Library\\Library.Infrastructure\\Library.Infrastructure.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Anna\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.22\\microsoft.netcore.app.ref.8.0.22.nupkg.sha512",
+    "C:\\Users\\Anna\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.22\\microsoft.windowsdesktop.app.ref.8.0.22.nupkg.sha512",
+    "C:\\Users\\Anna\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.22\\microsoft.aspnetcore.app.ref.8.0.22.nupkg.sha512"
+  ],
+  "logs": []
+}
