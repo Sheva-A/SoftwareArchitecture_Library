@@ -1,13 +1,16 @@
+using Library.Application.Common;
 using Library.Application.Contracts;
 using Library.Application.Lending.DTOs;
 using Library.Domain.Lending.Entities;
+using Library.Domain.Lending.Events;
 using Library.Domain.Lending.Repositories;
 using Library.Domain.Lending.ValueObjects;
 
 namespace Library.Application.Lending.Services;
 
 // Реалізація сервісу позик.
-// Демонструє взаємодію між bounded contexts через контракт IBookAvailabilityService.
+// Демонструє взаємодію між bounded contexts через контракт IBookAvailabilityService
+// та публікацію доменних подій через IEventDispatcher.
 public class LoanService : ILoanService
 {
     private readonly ILoanRepository _loanRepository;
@@ -16,14 +19,19 @@ public class LoanService : ILoanService
     // Зв'язок з bounded context BookCatalog — лише через інтерфейс-контракт
     private readonly IBookAvailabilityService _bookAvailabilityService;
 
+    // Диспетчер подій — сервіс не знає, хто і як обробить подію
+    private readonly IEventDispatcher _eventDispatcher;
+
     public LoanService(
         ILoanRepository loanRepository,
         IMemberRepository memberRepository,
-        IBookAvailabilityService bookAvailabilityService)
+        IBookAvailabilityService bookAvailabilityService,
+        IEventDispatcher eventDispatcher)
     {
         _loanRepository = loanRepository;
         _memberRepository = memberRepository;
         _bookAvailabilityService = bookAvailabilityService;
+        _eventDispatcher = eventDispatcher;
     }
 
     public async Task<IEnumerable<LoanDto>> GetAllAsync()
@@ -73,6 +81,9 @@ public class LoanService : ILoanService
         // Повідомити BookCatalog BC про видачу (через контракт)
         await _bookAvailabilityService.MarkBookAsCheckedOutAsync(dto.BookId);
 
+        // Опублікувати доменну подію — обробники підключені незалежно через DI
+        await _eventDispatcher.DispatchAsync(new BookBorrowedEvent(dto.BookId, dto.MemberId, DateTime.UtcNow));
+
         return MapToDto(loan, member.FullName);
     }
 
@@ -87,6 +98,9 @@ public class LoanService : ILoanService
 
         // Повідомити BookCatalog BC, що книга повернута
         await _bookAvailabilityService.MarkBookAsReturnedAsync(loan.BookId);
+
+        // Опублікувати доменну подію
+        await _eventDispatcher.DispatchAsync(new BookReturnedEvent(loan.BookId, loan.MemberId, DateTime.UtcNow));
 
         var member = await _memberRepository.GetByIdAsync(loan.MemberId);
         return MapToDto(loan, member?.FullName ?? "Невідомо");
