@@ -1,21 +1,30 @@
 using Library.Application.BookCatalog.DTOs;
+using Library.Application.Common;
 using Library.Domain.BookCatalog.Entities;
+using Library.Domain.BookCatalog.Events;
 using Library.Domain.BookCatalog.Repositories;
 using Library.Domain.BookCatalog.ValueObjects;
 
 namespace Library.Application.BookCatalog.Services;
 
 // Реалізація сервісу книг — розміщується в Application шарі.
-// Оркеструє доменні об'єкти, не містить бізнес-правил (вони у Book).
+// Оркеструє доменні об'єкти, публікує доменні події через IEventDispatcher.
 public class BookService : IBookService
 {
     private readonly IBookRepository _bookRepository;
     private readonly IAuthorRepository _authorRepository;
 
-    public BookService(IBookRepository bookRepository, IAuthorRepository authorRepository)
+    // Диспетчер подій — сервіс не знає, хто і як обробить подію
+    private readonly IEventDispatcher _eventDispatcher;
+
+    public BookService(
+        IBookRepository bookRepository,
+        IAuthorRepository authorRepository,
+        IEventDispatcher eventDispatcher)
     {
         _bookRepository = bookRepository;
         _authorRepository = authorRepository;
+        _eventDispatcher = eventDispatcher;
     }
 
     public async Task<IEnumerable<BookDto>> GetAllAsync()
@@ -53,6 +62,9 @@ public class BookService : IBookService
         var book = new Book(title, isbn, dto.AuthorId, dto.PublicationYear);
 
         await _bookRepository.AddAsync(book);
+
+        // Опублікувати доменну подію — обробники підключені незалежно через DI
+        await _eventDispatcher.DispatchAsync(new BookCreatedEvent(book.Id, dto.Title, DateTime.UtcNow));
 
         return MapToDto(book, author.FullName);
     }

@@ -1,10 +1,16 @@
+using Library.Application.BookCatalog.EventHandlers;
 using Library.Application.BookCatalog.Services;
+using Library.Application.Common;
 using Library.Application.Contracts;
+using Library.Application.Lending.EventHandlers;
 using Library.Application.Lending.Services;
+using Library.Domain.BookCatalog.Events;
 using Library.Domain.BookCatalog.Repositories;
+using Library.Domain.Lending.Events;
 using Library.Domain.Lending.Repositories;
 using Library.Infrastructure.BookCatalog.Repositories;
 using Library.Infrastructure.BookCatalog.Services;
+using Library.Infrastructure.Events;
 using Library.Infrastructure.Lending.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -24,6 +30,14 @@ public static class DependencyInjection
 
         // Cross-context сервіс
         services.AddScoped<IBookAvailabilityService, BookAvailabilityService>();
+
+        // Диспетчер подій — слабке зв'язування через IServiceProvider
+        services.AddScoped<IEventDispatcher, InMemoryEventDispatcher>();
+
+        // Обробники доменних подій
+        services.AddScoped<IEventHandler<BookBorrowedEvent>, BookBorrowedEventHandler>();
+        services.AddScoped<IEventHandler<BookReturnedEvent>, BookReturnedEventHandler>();
+        services.AddScoped<IEventHandler<BookCreatedEvent>, BookCreatedEventHandler>();
 
         // Сервіси прикладного шару
         services.AddScoped<IBookService, BookService>();
