@@ -6,7 +6,7 @@ using Library.Domain.Lending;
 namespace Library.Application.Lending;
 
 // Сценарії видачі та повернення книг
-public class LoanService
+public class LoanService : ILoanService
 {
     private readonly ILoanRepository _loans;
     private readonly IBookCatalog _catalog;

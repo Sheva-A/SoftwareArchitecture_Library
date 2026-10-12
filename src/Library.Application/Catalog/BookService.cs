@@ -4,8 +4,8 @@ using Library.Domain.Catalog;
 
 namespace Library.Application.Catalog;
 
-// Сценарії роботи з каталогом книг
-public class BookService : IBookCatalog
+// Сценарії роботи з каталогом книг: додавання та перегляд
+public class BookService : IBookService
 {
     private readonly IBookRepository _books;
     private readonly IEventBus _events;
@@ -31,20 +31,5 @@ public class BookService : IBookCatalog
     public IReadOnlyList<Book> GetAll()
     {
         return _books.GetAll();
-    }
-
-    public void BorrowBook(Guid bookId)
-    {
-        GetBook(bookId).MarkAsBorrowed();
-    }
-
-    public void ReturnBook(Guid bookId)
-    {
-        GetBook(bookId).MarkAsReturned();
-    }
-
-    private Book GetBook(Guid bookId)
-    {
-        return _books.GetById(bookId) ?? throw new KeyNotFoundException("Книгу не знайдено");
     }
 }

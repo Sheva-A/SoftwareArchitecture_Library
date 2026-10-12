@@ -30,10 +30,10 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<IBookRepository, InMemoryBookRepository>();
 builder.Services.AddSingleton<ILoanRepository, InMemoryLoanRepository>();
 
-// Сервіси шару Application
-builder.Services.AddScoped<BookService>();
-builder.Services.AddScoped<IBookCatalog, BookService>();
-builder.Services.AddScoped<LoanService>();
+// Сервіси шару Application підключаємо через інтерфейси
+builder.Services.AddScoped<IBookService, BookService>();
+builder.Services.AddScoped<IBookCatalog, BookAvailabilityService>();
+builder.Services.AddScoped<ILoanService, LoanService>();
 
 // Публікація подій
 builder.Services.AddScoped<IEventBus, InProcessEventBus>();

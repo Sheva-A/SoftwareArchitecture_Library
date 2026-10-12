@@ -8,9 +8,9 @@ namespace Library.WebApi.Controllers;
 [Route("api/loans")]
 public class LoansController : ControllerBase
 {
-    private readonly LoanService _loanService;
+    private readonly ILoanService _loanService;
 
-    public LoansController(LoanService loanService)
+    public LoansController(ILoanService loanService)
     {
         _loanService = loanService;
     }
