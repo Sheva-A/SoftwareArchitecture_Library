@@ -1,4 +1,6 @@
 using Library.Application.Catalog;
+using Library.Application.Events;
+using Library.Application.Lending.Events;
 using Library.Domain.Lending;
 
 namespace Library.Application.Lending;
@@ -8,11 +10,13 @@ public class LoanService
 {
     private readonly ILoanRepository _loans;
     private readonly IBookCatalog _catalog;
+    private readonly IEventBus _events;
 
-    public LoanService(ILoanRepository loans, IBookCatalog catalog)
+    public LoanService(ILoanRepository loans, IBookCatalog catalog, IEventBus events)
     {
         _loans = loans;
         _catalog = catalog;
+        _events = events;
     }
 
     public Loan BorrowBook(Guid bookId, string readerName)
@@ -23,6 +27,10 @@ public class LoanService
         _catalog.BorrowBook(bookId);
 
         _loans.Add(loan);
+
+        // Публікуємо подію, не знаючи, хто її обробить
+        _events.Publish(new BookBorrowed(loan.Id, loan.BookId, loan.ReaderName, loan.DueDate));
+
         return loan;
     }
 

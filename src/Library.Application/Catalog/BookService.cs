@@ -1,3 +1,5 @@
+using Library.Application.Catalog.Events;
+using Library.Application.Events;
 using Library.Domain.Catalog;
 
 namespace Library.Application.Catalog;
@@ -6,10 +8,12 @@ namespace Library.Application.Catalog;
 public class BookService : IBookCatalog
 {
     private readonly IBookRepository _books;
+    private readonly IEventBus _events;
 
-    public BookService(IBookRepository books)
+    public BookService(IBookRepository books, IEventBus events)
     {
         _books = books;
+        _events = events;
     }
 
     public Book AddBook(string title, string author, string isbn)
@@ -17,6 +21,10 @@ public class BookService : IBookCatalog
         // Перевірки виконує сама доменна модель
         var book = new Book(title, author, new Isbn(isbn));
         _books.Add(book);
+
+        // Публікуємо подію, не знаючи, хто її обробить
+        _events.Publish(new BookAdded(book.Id, book.Title, book.Author));
+
         return book;
     }
 

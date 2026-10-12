@@ -1,12 +1,20 @@
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using Library.Application.Catalog;
+using Library.Application.Catalog.Events;
+using Library.Application.Events;
 using Library.Application.Lending;
+using Library.Application.Lending.Events;
+using Library.Application.Notifications;
+using Library.Application.Statistics;
 using Library.Domain.Catalog;
 using Library.Domain.Common;
 using Library.Domain.Lending;
 using Library.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Diagnostics;
+
+// Щоб українські літери в консолі відображались правильно
+Console.OutputEncoding = System.Text.Encoding.UTF8;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +34,14 @@ builder.Services.AddSingleton<ILoanRepository, InMemoryLoanRepository>();
 builder.Services.AddScoped<BookService>();
 builder.Services.AddScoped<IBookCatalog, BookService>();
 builder.Services.AddScoped<LoanService>();
+
+// Публікація подій
+builder.Services.AddScoped<IEventBus, InProcessEventBus>();
+
+// Обробники подій, на одну подію може бути кілька обробників
+builder.Services.AddScoped<IEventHandler<BookAdded>, NewBookNotificationHandler>();
+builder.Services.AddScoped<IEventHandler<BookBorrowed>, ReturnReminderHandler>();
+builder.Services.AddSingleton<IEventHandler<BookBorrowed>, LendingStatisticsHandler>();
 
 var app = builder.Build();
 
