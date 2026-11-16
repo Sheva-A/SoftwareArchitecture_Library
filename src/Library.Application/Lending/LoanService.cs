@@ -1,4 +1,5 @@
 using Library.Application.Catalog;
+using Library.Application.Common;
 using Library.Application.Events;
 using Library.Application.Lending.Events;
 using Library.Domain.Common;
@@ -11,13 +12,16 @@ public class LoanService : ILoanService
 {
     private readonly ILoanRepository _loans;
     private readonly IBookCatalog _catalog;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IEventBus _events;
     private readonly IClock _clock;
 
-    public LoanService(ILoanRepository loans, IBookCatalog catalog, IEventBus events, IClock clock)
+    public LoanService(ILoanRepository loans, IBookCatalog catalog, IUnitOfWork unitOfWork,
+        IEventBus events, IClock clock)
     {
         _loans = loans;
         _catalog = catalog;
+        _unitOfWork = unitOfWork;
         _events = events;
         _clock = clock;
     }
@@ -30,6 +34,9 @@ public class LoanService : ILoanService
         _catalog.BorrowBook(bookId);
 
         _loans.Add(loan);
+
+        // Зміну книги та нову видачу зберігаємо разом
+        _unitOfWork.SaveChanges();
 
         // Публікуємо подію, не знаючи, хто її обробить
         _events.Publish(new BookBorrowed(loan.Id, loan.BookId, loan.ReaderName, loan.DueDate));
@@ -45,6 +52,9 @@ public class LoanService : ILoanService
 
         // Повідомляємо каталог, що книга знову доступна
         _catalog.ReturnBook(loan.BookId);
+
+        // Зміни видачі та книги зберігаємо разом
+        _unitOfWork.SaveChanges();
 
         return loan;
     }

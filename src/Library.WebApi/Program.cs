@@ -1,13 +1,13 @@
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using Library.Application.Catalog;
+using Library.Application.Common;
 using Library.Application.Events;
 using Library.Application.Lending;
 using Library.Application.Notifications;
 using Library.Application.Statistics;
-using Library.Domain.Catalog;
 using Library.Domain.Common;
-using Library.Domain.Lending;
+using Library.Infrastructure.Persistence;
 using Library.Infrastructure.Repositories;
 using Library.Infrastructure.Time;
 using Microsoft.AspNetCore.Diagnostics;
@@ -25,9 +25,17 @@ builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.Encoder = enc
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Singleton: репозиторії зберігають дані в пам'яті, тому вони одні на весь застосунок
-builder.Services.AddSingleton<IBookRepository, InMemoryBookRepository>();
-builder.Services.AddSingleton<ILoanRepository, InMemoryLoanRepository>();
+// Singleton: сховище зберігає дані в пам'яті, тому воно одне на весь застосунок
+builder.Services.AddSingleton<InMemoryStore>();
+
+// Scoped: Unit of Work накопичує зміни одного запиту
+// Сервіси та репозиторії отримують той самий об'єкт у межах запиту
+builder.Services.AddScoped<InMemoryUnitOfWork>();
+builder.Services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<InMemoryUnitOfWork>());
+
+// Scoped: репозиторії працюють з Unit of Work поточного запиту
+builder.Services.AddScoped<IBookRepository, InMemoryBookRepository>();
+builder.Services.AddScoped<ILoanRepository, InMemoryLoanRepository>();
 
 // Singleton: годинник не має стану, достатньо одного екземпляра
 builder.Services.AddSingleton<IClock, SystemClock>();
