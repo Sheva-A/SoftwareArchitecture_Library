@@ -12,13 +12,16 @@ public class BookService : IBookService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEventBus _events;
     private readonly IBookMapper _mapper;
+    private readonly IBookListCache _cache;
 
-    public BookService(IBookRepository books, IUnitOfWork unitOfWork, IEventBus events, IBookMapper mapper)
+    public BookService(IBookRepository books, IUnitOfWork unitOfWork, IEventBus events, IBookMapper mapper,
+        IBookListCache cache)
     {
         _books = books;
         _unitOfWork = unitOfWork;
         _events = events;
         _mapper = mapper;
+        _cache = cache;
     }
 
     public AddBookResultDto AddBook(AddBookDto dto)
@@ -30,6 +33,9 @@ public class BookService : IBookService
         // Зберігаємо зміни через Unit of Work
         _unitOfWork.SaveChanges();
 
+        // Список книг змінився, тому видаляємо його з кешу
+        _cache.Remove();
+
         // Публікуємо подію, не знаючи, хто її обробить
         _events.Publish(new BookAdded(book.Id, book.Title, book.Author));
 
@@ -39,6 +45,15 @@ public class BookService : IBookService
 
     public IReadOnlyList<BookDto> GetAll()
     {
-        return _books.GetAll().Select(_mapper.ToDto).ToList();
+        // Спочатку пробуємо взяти список з кешу
+        var cached = _cache.Get();
+        if (cached != null)
+            return cached;
+
+        // Якщо в кеші немає, беремо дані зі сховища і зберігаємо в кеш
+        var books = _books.GetAll().Select(_mapper.ToDto).ToList();
+        _cache.Set(books);
+
+        return books;
     }
 }

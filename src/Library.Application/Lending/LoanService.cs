@@ -16,9 +16,10 @@ public class LoanService : ILoanService
     private readonly IEventBus _events;
     private readonly IClock _clock;
     private readonly ILoanMapper _mapper;
+    private readonly IBookListCache _bookListCache;
 
     public LoanService(ILoanRepository loans, IBookCatalog catalog, IUnitOfWork unitOfWork,
-        IEventBus events, IClock clock, ILoanMapper mapper)
+        IEventBus events, IClock clock, ILoanMapper mapper, IBookListCache bookListCache)
     {
         _loans = loans;
         _catalog = catalog;
@@ -26,6 +27,7 @@ public class LoanService : ILoanService
         _events = events;
         _clock = clock;
         _mapper = mapper;
+        _bookListCache = bookListCache;
     }
 
     public BorrowBookResultDto BorrowBook(BorrowBookDto dto)
@@ -39,6 +41,9 @@ public class LoanService : ILoanService
 
         // Зміну книги та нову видачу зберігаємо разом
         _unitOfWork.SaveChanges();
+
+        // Наявність книги змінилась, тому список книг у кеші застарів
+        _bookListCache.Remove();
 
         // Публікуємо подію, не знаючи, хто її обробить
         _events.Publish(new BookBorrowed(loan.Id, loan.BookId, loan.ReaderName, loan.DueDate));
@@ -58,6 +63,9 @@ public class LoanService : ILoanService
 
         // Зміни видачі та книги зберігаємо разом
         _unitOfWork.SaveChanges();
+
+        // Наявність книги змінилась, тому список книг у кеші застарів
+        _bookListCache.Remove();
 
         return _mapper.ToReturnResultDto(loan);
     }

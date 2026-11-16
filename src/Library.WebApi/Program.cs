@@ -9,6 +9,7 @@ using Library.Application.Lending;
 using Library.Application.Notifications;
 using Library.Application.Statistics;
 using Library.Domain.Common;
+using Library.Infrastructure.Caching;
 using Library.Infrastructure.Persistence;
 using Library.Infrastructure.Repositories;
 using Library.Infrastructure.Time;
@@ -46,6 +47,12 @@ builder.Services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<InMemoryUnit
 // Scoped: репозиторії працюють з Unit of Work поточного запиту
 builder.Services.AddScoped<IBookRepository, InMemoryBookRepository>();
 builder.Services.AddScoped<ILoanRepository, InMemoryLoanRepository>();
+
+// Memcached: розподілений кеш, адреса сервера вказана в appsettings.json
+builder.Services.AddEnyimMemcached();
+
+// Singleton: кеш списку книг не має стану, дані лежать у Memcached
+builder.Services.AddSingleton<IBookListCache, MemcachedBookListCache>();
 
 // Singleton: годинник не має стану, достатньо одного екземпляра
 builder.Services.AddSingleton<IClock, SystemClock>();
