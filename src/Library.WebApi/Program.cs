@@ -1,5 +1,7 @@
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Library.Application.Catalog;
 using Library.Application.Common;
 using Library.Application.Events;
@@ -19,8 +21,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Щоб українські літери у відповідях не перетворювались на коди
 var encoder = JavaScriptEncoder.Create(UnicodeRanges.All);
-builder.Services.AddControllers().AddJsonOptions(o => o.JsonSerializerOptions.Encoder = encoder);
+
+// Обов'язковість полів перевіряє FluentValidation, тому вбудовану перевірку вимкнено
+builder.Services
+    .AddControllers(o => o.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true)
+    .AddJsonOptions(o => o.JsonSerializerOptions.Encoder = encoder);
 builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.Encoder = encoder);
+
+// FluentValidation: вхідні DTO перевіряються автоматично перед викликом сервісу
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<AddBookDtoValidator>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
