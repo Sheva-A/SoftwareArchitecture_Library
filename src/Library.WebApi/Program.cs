@@ -1,16 +1,15 @@
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using Library.Application.Catalog;
-using Library.Application.Catalog.Events;
 using Library.Application.Events;
 using Library.Application.Lending;
-using Library.Application.Lending.Events;
 using Library.Application.Notifications;
 using Library.Application.Statistics;
 using Library.Domain.Catalog;
 using Library.Domain.Common;
 using Library.Domain.Lending;
 using Library.Infrastructure.Repositories;
+using Library.Infrastructure.Time;
 using Microsoft.AspNetCore.Diagnostics;
 
 // Щоб українські літери в консолі відображались правильно
@@ -26,22 +25,27 @@ builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.Encoder = enc
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Репозиторії з шару Infrastructure підключаємо через інтерфейси з Domain
+// Singleton: репозиторії зберігають дані в пам'яті, тому вони одні на весь застосунок
 builder.Services.AddSingleton<IBookRepository, InMemoryBookRepository>();
 builder.Services.AddSingleton<ILoanRepository, InMemoryLoanRepository>();
 
-// Сервіси шару Application підключаємо через інтерфейси
+// Singleton: годинник не має стану, достатньо одного екземпляра
+builder.Services.AddSingleton<IClock, SystemClock>();
+
+// Scoped: сервіси шару Application створюються один раз на запит
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IBookCatalog, BookAvailabilityService>();
 builder.Services.AddScoped<ILoanService, LoanService>();
 
-// Публікація подій
+// Scoped: публікація подій у межах запиту
 builder.Services.AddScoped<IEventBus, InProcessEventBus>();
 
-// Обробники подій, на одну подію може бути кілька обробників
-builder.Services.AddScoped<IEventHandler<BookAdded>, NewBookNotificationHandler>();
-builder.Services.AddScoped<IEventHandler<BookBorrowed>, ReturnReminderHandler>();
-builder.Services.AddSingleton<IEventHandler<BookBorrowed>, LendingStatisticsHandler>();
+// Transient: обробники сповіщень не мають стану і створюються щоразу заново
+builder.Services.AddTransient<IEventHandler, NewBookNotificationHandler>();
+builder.Services.AddTransient<IEventHandler, ReturnReminderHandler>();
+
+// Singleton: обробник статистики зберігає лічильник видач
+builder.Services.AddSingleton<IEventHandler, LendingStatisticsHandler>();
 
 var app = builder.Build();
 

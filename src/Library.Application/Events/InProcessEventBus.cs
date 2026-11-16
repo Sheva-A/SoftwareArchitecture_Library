@@ -1,22 +1,20 @@
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Library.Application.Events;
 
 // Передає подію всім її обробникам усередині застосунку
 public class InProcessEventBus : IEventBus
 {
-    private readonly IServiceProvider _services;
+    private readonly IEnumerable<IEventHandler> _handlers;
 
-    public InProcessEventBus(IServiceProvider services)
+    // Обробники передаються через конструктор, клас не звертається до DI-контейнера
+    public InProcessEventBus(IEnumerable<IEventHandler> handlers)
     {
-        _services = services;
+        _handlers = handlers;
     }
 
     public void Publish<TEvent>(TEvent evt)
     {
-        // Отримуємо всі обробники цієї події і викликаємо їх
-        var handlers = _services.GetServices<IEventHandler<TEvent>>();
-        foreach (var handler in handlers)
+        // Вибираємо обробники цієї події і викликаємо їх
+        foreach (var handler in _handlers.OfType<IEventHandler<TEvent>>())
             handler.Handle(evt);
     }
 }

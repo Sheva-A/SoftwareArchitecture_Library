@@ -18,7 +18,8 @@ public class Loan
     public DateTime? ReturnDate { get; private set; }
     public bool IsReturned => ReturnDate != null;
 
-    public Loan(Guid bookId, string readerName)
+    // Дату видачі передають ззовні, сутність не звертається до системного часу
+    public Loan(Guid bookId, string readerName, DateTime loanDate)
     {
         if (string.IsNullOrWhiteSpace(readerName))
             throw new DomainException("Ім'я читача обов'язкове");
@@ -26,16 +27,16 @@ public class Loan
         Id = Guid.NewGuid();
         BookId = bookId;
         ReaderName = readerName.Trim();
-        LoanDate = DateTime.Now;
+        LoanDate = loanDate;
         DueDate = LoanDate.AddDays(LoanDays);
     }
 
     // Читач повертає книгу
-    public void Return()
+    public void Return(DateTime returnDate)
     {
         if (IsReturned)
             throw new DomainException("Книгу вже повернули");
 
-        ReturnDate = DateTime.Now;
+        ReturnDate = returnDate;
     }
 }
