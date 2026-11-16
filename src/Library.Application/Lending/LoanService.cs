@@ -15,23 +15,25 @@ public class LoanService : ILoanService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IEventBus _events;
     private readonly IClock _clock;
+    private readonly ILoanMapper _mapper;
 
     public LoanService(ILoanRepository loans, IBookCatalog catalog, IUnitOfWork unitOfWork,
-        IEventBus events, IClock clock)
+        IEventBus events, IClock clock, ILoanMapper mapper)
     {
         _loans = loans;
         _catalog = catalog;
         _unitOfWork = unitOfWork;
         _events = events;
         _clock = clock;
+        _mapper = mapper;
     }
 
-    public Loan BorrowBook(Guid bookId, string readerName)
+    public BorrowBookResultDto BorrowBook(BorrowBookDto dto)
     {
-        var loan = new Loan(bookId, readerName, _clock.Now);
+        var loan = new Loan(dto.BookId, dto.ReaderName, _clock.Now);
 
         // Каталог перевіряє, чи книга доступна, і позначає її виданою
-        _catalog.BorrowBook(bookId);
+        _catalog.BorrowBook(dto.BookId);
 
         _loans.Add(loan);
 
@@ -41,10 +43,11 @@ public class LoanService : ILoanService
         // Публікуємо подію, не знаючи, хто її обробить
         _events.Publish(new BookBorrowed(loan.Id, loan.BookId, loan.ReaderName, loan.DueDate));
 
-        return loan;
+        // Назовні повертаємо DTO, а не доменну сутність
+        return _mapper.ToBorrowResultDto(loan);
     }
 
-    public Loan ReturnBook(Guid loanId)
+    public ReturnBookResultDto ReturnBook(Guid loanId)
     {
         var loan = _loans.GetById(loanId) ?? throw new KeyNotFoundException("Видачу не знайдено");
 
@@ -56,11 +59,11 @@ public class LoanService : ILoanService
         // Зміни видачі та книги зберігаємо разом
         _unitOfWork.SaveChanges();
 
-        return loan;
+        return _mapper.ToReturnResultDto(loan);
     }
 
-    public IReadOnlyList<Loan> GetAll()
+    public IReadOnlyList<LoanDto> GetAll()
     {
-        return _loans.GetAll();
+        return _loans.GetAll().Select(_mapper.ToDto).ToList();
     }
 }

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Library.WebApi.Controllers;
 
-// Контролер видачі та повернення книг
+// Контролер видачі та повернення книг, працює лише з DTO
 [ApiController]
 [Route("api/loans")]
 public class LoansController : ControllerBase
@@ -22,19 +22,14 @@ public class LoansController : ControllerBase
     }
 
     [HttpPost]
-    public IActionResult Borrow(BorrowBookRequest request)
+    public IActionResult Borrow(BorrowBookDto dto)
     {
-        var loan = _loanService.BorrowBook(request.BookId, request.ReaderName);
-        return Ok(loan);
+        return Ok(_loanService.BorrowBook(dto));
     }
 
     [HttpPost("{id}/return")]
     public IActionResult Return(Guid id)
     {
-        var loan = _loanService.ReturnBook(id);
-        return Ok(loan);
+        return Ok(_loanService.ReturnBook(id));
     }
 }
-
-// Дані для видачі книги
-public record BorrowBookRequest(Guid BookId, string ReaderName);

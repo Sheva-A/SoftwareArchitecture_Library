@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Library.WebApi.Controllers;
 
-// Контролер лише приймає запит і передає його в сервіс
+// Контролер приймає і повертає лише DTO, доменних сутностей тут немає
 [ApiController]
 [Route("api/books")]
 public class BooksController : ControllerBase
@@ -22,12 +22,8 @@ public class BooksController : ControllerBase
     }
 
     [HttpPost]
-    public IActionResult Add(AddBookRequest request)
+    public IActionResult Add(AddBookDto dto)
     {
-        var book = _bookService.AddBook(request.Title, request.Author, request.Isbn);
-        return Ok(book);
+        return Ok(_bookService.AddBook(dto));
     }
 }
-
-// Дані для додавання книги
-public record AddBookRequest(string Title, string Author, string Isbn);

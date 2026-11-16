@@ -1,10 +1,8 @@
-using Library.Domain.Catalog;
-
 namespace Library.Application.Catalog;
 
-// Абстракція сервісу каталогу, від неї залежить контролер
+// Абстракція сервісу каталогу, приймає і повертає лише DTO
 public interface IBookService
 {
-    Book AddBook(string title, string author, string isbn);
-    IReadOnlyList<Book> GetAll();
+    AddBookResultDto AddBook(AddBookDto dto);
+    IReadOnlyList<BookDto> GetAll();
 }

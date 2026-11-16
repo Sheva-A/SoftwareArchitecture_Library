@@ -45,6 +45,10 @@ builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IBookCatalog, BookAvailabilityService>();
 builder.Services.AddScoped<ILoanService, LoanService>();
 
+// Transient: мапери не мають стану і створюються щоразу заново
+builder.Services.AddTransient<IBookMapper, BookMapper>();
+builder.Services.AddTransient<ILoanMapper, LoanMapper>();
+
 // Scoped: публікація подій у межах запиту
 builder.Services.AddScoped<IEventBus, InProcessEventBus>();
 

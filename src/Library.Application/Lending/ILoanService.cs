@@ -1,11 +1,9 @@
-using Library.Domain.Lending;
-
 namespace Library.Application.Lending;
 
-// Абстракція сервісу видачі, від неї залежить контролер
+// Абстракція сервісу видачі, приймає і повертає лише DTO
 public interface ILoanService
 {
-    Loan BorrowBook(Guid bookId, string readerName);
-    Loan ReturnBook(Guid loanId);
-    IReadOnlyList<Loan> GetAll();
+    BorrowBookResultDto BorrowBook(BorrowBookDto dto);
+    ReturnBookResultDto ReturnBook(Guid loanId);
+    IReadOnlyList<LoanDto> GetAll();
 }
